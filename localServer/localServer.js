@@ -8,9 +8,10 @@ const db = new sqlite3.Database(':memory:');
 
 // TODO: Create a socket for incoming data from cloud
 
-const sock = new zmq.Push();
+const pushSock = new zmq.Push();
+const pullSock = new zmq.Pull();
 const run = async () => {
-    sock.connect('tcp://127.0.1:3001');
+    pushSock.connect('tcp://127.0.1:3001');
     console.log('Producer bound to port 3001');
 };
 
@@ -18,15 +19,20 @@ const run = async () => {
 // Initialize SQLite database
 db.serialize(() => {
     db.run("CREATE TABLE sensor_data (sensor TEXT, id TEXT, value REAL, timestamp TEXT, sent BOOLEAN)");
+    db.run("CREATE TABLE cloud_command_data (action TEXT, timestamp TEXT)");
 });
 
 const storeData = (data) => {
     db.run(`INSERT INTO sensor_data (sensor, id, value, timestamp, sent) VALUES (?, ?, ?, ?, ?)`, [data.sensor, data.id, data.value, data.timestamp, false]);
 };
 
+const storeCloudCommand = (command) => {
+    db.run(`INSERT INTO cloud_command_data (action, timestamp) VALUES (?, ?)`, [command.action, command.timestamp]);
+};
+
 const sendDataToCloud = async (data) => {
     try{
-        await sock.send(JSON.stringify(data));
+        await pushSock.send(JSON.stringify(data));
         console.log('Data sent to cloud:', data);
     } catch(error) {
         console.error(`Error sending data to cloud: ${error.message}`);
@@ -66,7 +72,20 @@ const processUnsentData = () => {
     });
 };
 
+const receiveData = async () => {
+    await pullSock.bind('tcp://127.0.1:3002');
+
+    for await (const [msg] of pullSock) {
+        const data = JSON.parse(msg.toString());
+        console.log('Received data from fog:', data);
+        storeCloudCommand(data);
+    }
+};
+
 run().catch((err) => console.error('Error running producer:', err.message));
+
 setInterval(processUnsentData, 5000);
+
+receiveData().catch((err) => console.error('Error receiving data:', err.message));
 
 console.log('Fog node server started on port 3000');
