@@ -10,7 +10,7 @@ const db = new sqlite3.Database(':memory:');
 
 const sock = new zmq.Push();
 const run = async () => {
-    await sock.bind('tcp://127.0.1:3001');
+    sock.connect('tcp://127.0.1:3001');
     console.log('Producer bound to port 3001');
 };
 
@@ -55,8 +55,8 @@ const processUnsentData = () => {
         if(error) {
             console.error(`Error getting unsent data: ${error.message}`);
         } else {
-            if(rows) {
-                const rowPromises = rows.forEach(async (row) => {
+            if(rows && rows.length > 0) {
+                const rowPromises = rows.map(async (row) => {
                     await sendDataToCloud(row);
                     db.run(`UPDATE sensor_data SET sent = 1 WHERE sensor = ? AND id = ? AND value = ? AND timestamp = ?`, [row.sensor, row.id, row.value, row.timestamp]);
                 });
@@ -67,6 +67,6 @@ const processUnsentData = () => {
 };
 
 run().catch((err) => console.error('Error running producer:', err.message));
-//setInterval(processUnsentData, 5000);
+setInterval(processUnsentData, 5000);
 
 console.log('Fog node server started on port 3000');

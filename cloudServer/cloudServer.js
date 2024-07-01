@@ -5,8 +5,7 @@ const pullSock = new zmq.Pull();
 const pushSock = new zmq.Push();
 
 const start = async () => {
-    await pullSock.bind('tcp://*:3001');
-    await pushSock.bind('tcp://*:3002');
+    pushSock.connect('tcp://127.0.1:3002');
 };
 
 const processReceivedData = (data) => {
@@ -24,6 +23,8 @@ const sendCommandToFog = async (command) => {
 };
 
 const receiveData = async () => {
+    await pullSock.bind('tcp://127.0.1:3001');
+
     for await (const [msg] of pullSock) {
         const data = JSON.parse(msg.toString());
         console.log('Received data from fog:', data);
@@ -35,9 +36,10 @@ start().catch((err) => console.error('Error starting ZeroMQ:', err.message));
 receiveData().catch((err) => console.error('Error receiving data:', err.message));
 
 // Example command to be sent to fog nodes periodically
-setInterval(() => {
+
+setInterval(async () => {
     const command = { action: 'update', timestamp: new Date() };
-    sendCommandToFog(command);
-}, 10000);
+    await sendCommandToFog(command);
+}, 1000);
 
 console.log('Cloud server started');
