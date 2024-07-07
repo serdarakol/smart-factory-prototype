@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const sqlite3 = require('sqlite3').verbose();
 
 const sensorWss = new WebSocket.Server({ port: 3000 });
-const cloudWsUrl = 'ws://localhost:3001';
+const cloudWsUrl = 'ws://34.32.50.230:3001';
 
 let cloudWs;
 const db = new sqlite3.Database('./fogNodeData.sqlite');
