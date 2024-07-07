@@ -1,45 +1,78 @@
-const zmq = require('zeromq');
+const WebSocket = require('ws');
+const sqlite3 = require('sqlite3').verbose();
 
-// ZeroMQ setup for receiving data from fog nodes and sending commands to fog nodes
-const pullSock = new zmq.Pull();
-const pushSock = new zmq.Push();
+const wss = new WebSocket.Server({ port: 3001 });
+const db = new sqlite3.Database(':memory:');
 
-const start = async () => {
-    pushSock.connect('tcp://127.0.1:3002');
-};
+db.serialize(() => {
+    db.run("CREATE TABLE cloud_sensor_data (locality TEXT, sensor TEXT, id TEXT, value REAL, timestamp TEXT)");
+    db.run("CREATE TABLE cloud_command_data (action TEXT, timestamp TEXT, sent BOOLEAN)");
+});
 
 const processReceivedData = (data) => {
     console.log('Processing data:', data);
-    // Add your data processing logic here (e.g., store in a database, perform analytics)
+    db.run(`INSERT INTO cloud_sensor_data (locality, sensor, id, value, timestamp) VALUES (?, ?, ?, ?, ?)`, [data.locality, data.sensor, data.id, data.value, data.timestamp]);
 };
 
 const sendCommandToFog = async (command) => {
-    try {
-        await pushSock.send(JSON.stringify(command));
-        console.log('Command sent to fog:', command);
-    } catch (err) {
-        console.error('Error sending command to fog:', err.message);
-    }
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(command));
+            console.log('Command sent to fog node');
+            db.run(`UPDATE cloud_command_data SET sent = 1 WHERE action = ? AND timestamp = ?`, [command.action, command.timestamp]);
+        }
+    });
 };
 
 const receiveData = async () => {
-    await pullSock.bind('tcp://127.0.1:3001');
+    wss.on('connection', (ws) => {
+        console.log('Fog node connected');
 
-    for await (const [msg] of pullSock) {
-        const data = JSON.parse(msg.toString());
-        console.log('Received data from fog:', data);
-        processReceivedData(data);
-    }
+        ws.on('message', (message) => {
+            const data = JSON.parse(message);
+            processReceivedData(data);
+        });
+
+        ws.on('close', () => {
+            console.log('Fog node disconnected');
+        });
+
+        ws.on('error', (error) => {
+            console.error(`WebSocket error: ${error.message}`);
+        });
+
+    });
+
 };
 
-start().catch((err) => console.error('Error starting ZeroMQ:', err.message));
-receiveData().catch((err) => console.error('Error receiving data:', err.message));
-
-// Example command to be sent to fog nodes periodically
-
-setInterval(async () => {
-    const command = { action: 'update', timestamp: new Date() };
+const generateCommand = async () => {
+    const command = { action: 'update', timestamp: new Date(), sent: false};
+    db.run(`INSERT INTO cloud_command_data (action, timestamp, sent) VALUES (?, ?, ?)`, [command.action, command.timestamp, command.sent]);
+    console.log('Command generated');
     await sendCommandToFog(command);
-}, 1000);
+};
+
+const processUnsentData = () => {
+    db.all(`SELECT * FROM cloud_command_data WHERE sent = 0`, async (err, rows) => {
+        if (err) {
+            console.error('Error fetching unsent data:', err.message);
+        } else {
+            if(rows && rows.length > 0) {
+                const rowPromises = rows.map(async (row) => {
+                    await sendCommandToFog(row);
+                });
+                await Promise.all(rowPromises);
+            }
+        }
+    });
+};
+
+receiveData();
+
+setInterval( async () => {
+    await generateCommand();
+}, 3000);
+// Process unsent data every 5 seconds
+setInterval(processUnsentData, 6000);
 
 console.log('Cloud server started');

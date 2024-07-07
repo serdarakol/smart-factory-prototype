@@ -7,7 +7,6 @@ class Sensor {
         this.min = min;
         this.max = max;
         this.localComponentUrl = localComponentUrl;
-        this.unsentData = [];
         this.isGeneratingData = false;
         this.connect();
     }
@@ -21,7 +20,6 @@ class Sensor {
 
         this.ws.on('open', () => {
             console.log(`Sensor ${this.name} (${this.sensorId}) connected to ${this.localComponentUrl}`);
-            this.sendUnsentData();
         });
 
         this.ws.on('close', () => {
@@ -41,23 +39,15 @@ class Sensor {
         setInterval(() => {
             const value = (Math.random() * (this.max - this.min) + this.min).toFixed(2);
             const data = {sensor: this.name, id: this.sensorId, value: parseFloat(value), timestamp: new Date()};
-            this.unsentData.push(data);
-            this.sendData();
+            this.sendData(data);
         }, 2000);
     }
 
-    sendData() {
+    sendData(data) {
         if(this.ws.readyState === WebSocket.OPEN) {
-            while(this.unsentData.length > 0) {
-                const data = this.unsentData.shift();
-                this.ws.send(JSON.stringify(data));
-                console.log(`Sensor ${this.name} (${this.sensorId}) sent data: ${JSON.stringify(data)}`);
-            }
+            this.ws.send(JSON.stringify(data));
+            console.log(`Sensor ${this.name} (${this.sensorId}) sent data: ${JSON.stringify(data)}`);
         }
-    }
-
-    sendUnsentData() {
-        this.sendData();
     }
 
 }
