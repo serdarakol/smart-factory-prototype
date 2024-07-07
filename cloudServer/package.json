@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "sqlite3": "^5.1.7",
-    "ws": "^8.18.0",
-    "zeromq": "^6.0.0-beta.20"
+    "ws": "^8.18.0"
   }
 }
