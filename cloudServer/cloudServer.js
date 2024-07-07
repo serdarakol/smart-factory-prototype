@@ -2,11 +2,11 @@ const WebSocket = require('ws');
 const sqlite3 = require('sqlite3').verbose();
 
 const wss = new WebSocket.Server({ port: 3001 });
-const db = new sqlite3.Database(':memory:');
+const db = new sqlite3.Database('./cloudData.sqlite');
 
 db.serialize(() => {
-    db.run("CREATE TABLE cloud_sensor_data (locality TEXT, sensor TEXT, id TEXT, value REAL, timestamp TEXT)");
-    db.run("CREATE TABLE cloud_command_data (action TEXT, timestamp TEXT, sent BOOLEAN)");
+    db.run("CREATE TABLE IF NOT EXISTS cloud_sensor_data (locality TEXT, sensor TEXT, id TEXT, value REAL, timestamp TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS cloud_command_data (action TEXT, timestamp TEXT, sent BOOLEAN)");
 });
 
 const processReceivedData = (data) => {

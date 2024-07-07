@@ -12,3 +12,6 @@ pids/
 *.seed
 *.pid.lock.DS_Store
 .DS_Store
+# Database
+*.db
+*.sqlite

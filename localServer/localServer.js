@@ -5,12 +5,12 @@ const sensorWss = new WebSocket.Server({ port: 3000 });
 const cloudWsUrl = 'ws://localhost:3001';
 
 let cloudWs;
-const db = new sqlite3.Database(':memory:');
+const db = new sqlite3.Database('./fogNodeData.sqlite');
 
 // Initialize SQLite database
 db.serialize(() => {
-    db.run("CREATE TABLE sensor_data (sensor TEXT, id TEXT, value REAL, timestamp TEXT, sent BOOLEAN)");
-    db.run("CREATE TABLE received_command_data (action TEXT, timestamp TEXT)");
+    db.run("CREATE TABLE IF NOT EXISTS sensor_data (sensor TEXT, id TEXT, value REAL, timestamp TEXT, sent BOOLEAN)");
+    db.run("CREATE TABLE IF NOT EXISTS received_command_data (action TEXT, timestamp TEXT)");
 });
 
 const connectToCloud = () => {
