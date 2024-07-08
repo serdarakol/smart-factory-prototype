@@ -8,26 +8,20 @@ This projcect simulates a smart factory with 3 temperature sensors that monitor 
 
 [View on Eraser![](https://app.eraser.io/workspace/SELy3kMiGuqut32J3RUf/preview?elements=EI2VJJBRPmMCIyaJn796lg&type=embed)](https://app.eraser.io/workspace/SELy3kMiGuqut32J3RUf?origin=share)
 
-## Local component 
-
-The local component sets up a fog node server using WebSocket and SQLite for handling sensor data and cloud communication. It creates a WebSocket server on port 3000 to receive sensor data, which is stored in an SQLite database. The server also connects to a cloud WebSocket server and attempts to reconnect every 5 seconds if disconnected. Incoming sensor data is logged, stored in the database, and sent to the cloud server, updating the database to reflect whether the data was successfully sent. Additionally, the server processes any unsent data from the database at regular intervals. Commands received from the cloud server are also stored in the database.
-
 ## Cloud
 
 This Node.js script sets up a WebSocket server on port 3001 and connects to a SQLite database stored in `cloudData.sqlite`. It initializes two tables, `cloud_sensor_data` and `cloud_command_data`, to store sensor data and command data, respectively. The script defines several functions to handle incoming WebSocket connections from fog nodes, process received sensor data, generate commands, and send commands to connected fog nodes. It also periodically generates new commands and attempts to resend any unsent commands every 3 and 6 seconds, respectively. The script logs connections, disconnections, and errors, providing a basic framework for a cloud server that communicates with fog nodes in an IoT setup.
 
 ### Websockets
 
-Endpoints.
-
-| ENV Variable                            | Default                    | Description                                             |
+| Variable                                | Default                    | Description                                             |
 | --------------------------------------- | :------------------------- | ------------------------------------------------------- |
-| DATABASE_REST_URL                       | `'http://postgrest:3000/'` | Upstream URL for the Database REST Service              |
-|                                         |                            | TCP Port for the Report Message from Fog                |
+| cloudWsUrl                              | `'ws://34.32.50.230:3001'` | Websocket for Cloud communication                       |
+| tempSensor                              | `'ws://127.0.0.1:3000'`    | Websocket for Sensor communication                      |
 
+## Local component 
 
-### SQL
-
+The local component sets up a fog node server using WebSocket and SQLite for handling sensor data and cloud communication. It creates a WebSocket server on port 3000 to receive sensor data, which is stored in an SQLite database. The server also connects to a cloud WebSocket server and attempts to reconnect every 5 seconds if disconnected. Incoming sensor data is logged, stored in the database, and sent to the cloud server, updating the database to reflect whether the data was successfully sent. Additionally, the server processes any unsent data from the database at regular intervals. Commands received from the cloud server are also stored in the database.
 
 ## Edge
 
@@ -36,10 +30,43 @@ The Edge devices are in our cases 3 temperature sensors. The JavaScript code def
 
 # How to start the project 
 
-To start the project:
+## Cloud Component  
 
+- make sure you have npm node installed in your vm instance
 
-Firstly, one has to define the address of the fog node. 
+- cd smart-factory-prototype
+
+- cd cloudServer
+
+Option 1
+  - npm install
+
+  - node clousServer.js 
+
+Option 2 
+
+  - docker build -t cloud-server
+
+  - docker tag cloud-server gcr.io/tu-berlin-fc-prototype/cloud-server
+
+  - docker run -d -p 3001:3001 gcr.io/tu-berlin-fc-prototype/cloud-server
+
+## Local component 
+
+- cd localServer
+
+- npm install
+
+- node localServer.js
+
+## Sensor 
+
+- cd sensorSimulator
+
+- npm install
+
+- node index.js
+
 
 
 # Technology stack
@@ -56,5 +83,11 @@ Firstly, one has to define the address of the fog node.
 - Sensor Simulator:
   - [JavaScript](https://js.org/index.html)
   - [Node.js](https://nodejs.org/en)
+
+
+# Documentation
+
+The video of our application can be found here: 
+https://youtu.be/yVBSKCIsSC8
 
 
