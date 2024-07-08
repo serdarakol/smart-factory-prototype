@@ -43,20 +43,18 @@ Firstly, one has to define the address of the fog node.
 
 
 # Technology stack
-
-- Local:
-  - [JavaScript](https://js.org/index.html)
-  - [ZeroMQ](https://zeromq.org/)
-  - [SQLite](https://www.sqlite.org/)
-  - [Docker](https://www.docker.com/)
-  - [Node.js](https://nodejs.org/en)
 - Cloud:
   - [JavaScript](https://js.org/index.html)
-  - [ZeroMQ](https://zeromq.org/)
   - [SQLite](https://www.sqlite.org/)
   - [Docker](https://www.docker.com/)
   - [Node.js](https://nodejs.org/en)
   - [GoogleCloud](https://cloud.google.com/gcp/)
-
+- Local:
+  - [JavaScript](https://js.org/index.html)
+  - [SQLite](https://www.sqlite.org/)
+  - [Node.js](https://nodejs.org/en)
+- Sensor Simulator:
+  - [JavaScript](https://js.org/index.html)
+  - [Node.js](https://nodejs.org/en)
 
 
