@@ -87,4 +87,4 @@ Option 2
 The video of our application can be found here: 
 https://youtu.be/yVBSKCIsSC8
 
-
+[Documentation](Documentation.pdf)
