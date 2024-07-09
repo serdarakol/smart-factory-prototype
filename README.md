@@ -48,7 +48,7 @@ Option 1
 
 Option 2 
 
-  - docker build -t cloud-server
+  - docker build -t cloud-server .
   - docker tag cloud-server gcr.io/tu-berlin-fc-prototype/cloud-server
   - docker run -d -p 3001:3001 gcr.io/tu-berlin-fc-prototype/cloud-server
 
